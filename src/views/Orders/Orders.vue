@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <code>orders page</code>
+  <div class="pa-6">
+      <TableOrders />
   </div>
 </template>
 

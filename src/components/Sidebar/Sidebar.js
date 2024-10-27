@@ -10,8 +10,8 @@ export default {
             return {
                 routes: [
                     { name: 'Home', icon: 'mdi-bank-outline', link: '/' },
-                    { name: 'Jogadores', icon: 'mdi-cards-variant', link: '/users' },
-                    { name: 'Encomendas', icon: 'mdi-cards-outline', link: '/orders' },
+                    { name: 'Jogadores', icon: 'mdi-account', link: '/users' },
+                    { name: 'Encomendas', icon: 'mdi-archive', link: '/orders' },
                 ]
             }
         },

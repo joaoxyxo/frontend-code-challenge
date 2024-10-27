@@ -5,42 +5,52 @@ import axios from 'axios';
 Vue.use(Vuex);
 
 const state = {
-    events: [],
-    eventsLoading: false,
-    selectedEvent: null,
+    orders: [],
+    ordersLoading: false,
+    selectedOrder: null,
     error: null,
 };
 
 const getters = {
-    events: (state) => state.events,
-    eventsLoading: (state) => state.eventsLoading,
-    selectedEvent: (state) => state.selectedEvent,
+    orders: (state) => state.orders,
+    ordersLoading: (state) => state.ordersLoading,
+    selectedOrder: (state) => state.selectedOrder,
     error: (state) => state.error,
 };
 
 const mutations = {
-    setEvents: (state, payload) => { state.events = payload },
-    setEventsLoading: (state, payload) => { state.eventsLoading = payload },
-    setSelectedEvent: (state, payload) => { state.selectedEvent = payload },
+    setOrders: (state, payload) => { state.orders = payload },
+    setOrdersLoading: (state, payload) => { state.ordersLoading = payload },
+    setSelectedOrder: (state, payload) => { state.selectedOrder = payload },
     setError: (state, payload) => { state.error = payload },
-    addEvent: (state, payload) => {
-        if (!state.events || !state.events.length)
-            state.events = [];
+    addOrder: (state, payload) => {
+        if (!state.orders || !state.orders.length)
+            state.orders = [];
 
-        state.events.unshift(payload);
+        state.orders.unshift(payload);
+    },
+    updateOrder: (state, payload) => {
+        const index = state.orders.findIndex(d => d.id == payload.id);
+
+        const updatedItems = [
+            ...state.orders.slice(0, index),
+            payload,
+            ...state.orders.slice(index + 1)
+        ];
+
+        state.orders = updatedItems;
     },
 };
 
 const actions = {
-    // Fetch the list of events
-    async fetchEvents({ commit }, payload) {
-        commit('setEventsLoading', true);
-        commit('setEvents', []);
+    // Fetch the list of orders
+    async fetchOrders({ commit }, payload) {
+        commit('setOrdersLoading', true);
+        commit('setOrders', []);
         commit('setError', null);
 
-        let request_url = Vue.prototype.$url_api_live + 'events';
+        let request_url = "http://localhost:3333" + '/orders';
 
-        request_url = StoreMixin.methods.generateQueryParamsUrl(request_url, payload);
 
         let output = false;
 
@@ -48,25 +58,24 @@ const actions = {
         .then(function (response) {
             output = response.status == 200;
             if (output) {
-                commit('setEvents', response.data);
+                commit('setOrders', response.data);
             } else {
                 commit('setError', 'Algo correu mal. Tente mais tarde ou contacte o suporte.');
-                commit('setErrorStatus', response.status);
             }
         })
         .catch(function (error) {
-            commit('setEvents', []);
+            commit('setOrders', []);
             commit('setError', 'Algo correu mal. Tente mais tarde ou contacte o suporte.');
             output = false;
         })
         .then(function () {
-            commit('setEventsLoading', false);
+            commit('setOrdersLoading', false);
             return output;
         });
     },
 
-    // Create a new event
-    async createEvent({ commit, dispatch }, payload) {
+    // Create a new order
+    async create({ commit, dispatch }, payload) {
         // Clear state
         dispatch('clearErrors');
 
@@ -74,7 +83,7 @@ const actions = {
         let data = payload;
 
         // Configure request
-        const request_url = Vue.prototype.$url_api_live + 'events';
+        const request_url = "http://localhost:3333" + '/orders';
 
         let config = {
             method: 'POST',
@@ -90,14 +99,11 @@ const actions = {
 
         return axios(config)
         .then(function (response) {
-            output = response.data.success;
-            if (response.status === 201) {
-                commit('addEvent', data);
+            if (response.status === 200) {
+                commit('addOrder', response.data);
                 output = true;
             } else {
                 commit('setError', 'Algo correu mal. Tente mais tarde ou contacte o suporte.');
-                commit('setHumanError', 'Algo correu mal. Tente mais tarde ou contacte o suporte.');
-                commit('setErrorStatus', response.status);
             }
         })
         .catch(function (error) {
@@ -109,70 +115,69 @@ const actions = {
         });
     },
 
-    async updateEvent({ commit, dispatch }, payload) {
-        const eventId = payload.id;
-        delete payload.id;
+    async update({ commit, dispatch }, payload) {
+        dispatch('clearErrors');
 
         // Handle payload data
-        let data = JSON.stringify(payload);
-
-        // Configure request_url
-        const request_url = Vue.prototype.$url_api_live + 'events/' + eventId;
+        let data = payload
+        delete data.password
 
         // Configure request
+        const request_url = "http://localhost:3333" + '/order/' + payload.userId + '/edit'
         let config = {
             method: 'PUT',
             url: request_url,
-            headers: { 
-              'Content-Type': 'application/json'
+            headers: {
+                'Content-Type': 'application/json'
             },
-            data : data
-        };
+            data: data
+        }
 
         // Execute request & return
         let output = false;
 
         return axios(config)
-        .then(function (response) {
-            output = response.data.success;
+            .then(function (response) {
+                if (response.status === 200) {
+                    output = true
+                    commit('setSelectedOrder', response.data);
+                    commit('updateOrder', response.data);
+                } else {
+                    commit('setError','Algo correu mal. Por favor confirma que colocaste todos os campos corretamente.');
+                }
+            })
+            .catch(function (error) {
+                commit('setError', 'Algo correu mal. Por favor confirma que colocaste todos os campos corretamente.');
+                output = false;
+            })
+            .then(function () {
+                return output;
+            });
+    },
 
+    async getOrder({ commit }, payload) {
+        commit('setError', null);
+
+        let request_url = "http://localhost:3333" + '/order/' + payload.id;
+
+        let output = false;
+
+        return axios.get(request_url)
+        .then(function (response) {
+            output = response.status == 200;
             if (output) {
-                commit('setSelectedEvent', response.data.data);
+                commit('setSelectedOrder', response.data);
             } else {
-                commit('setError', response.data.message);
-                commit('setHumanError', response.data.human_message);
+                commit('setError', 'Algo correu mal. Tente mais tarde ou contacte o suporte.');
             }
         })
         .catch(function (error) {
-            commit('setError', error.response ? error.response.data.message : error);
-            commit('setHumanError', error.response ? error.response.data.human_message : error);
+            commit('setError', 'Algo correu mal. Tente mais tarde ou contacte o suporte.');
             output = false;
         })
         .then(function () {
             return output;
         });
-    },
-
-    // Delete an event
-    async deleteEvent({ commit, dispatch }, eventId) {
-        commit('setError', null);
-
-        try {
-            const response = await axios.delete(Vue.prototype.$url_api_live + `events/${eventId}`);
-            if (response.status === 204) {
-                // Timeout is here like an HAMMER to fix it. In order to keep it smooth when C,U,D and update Table info visually.
-                setTimeout(() => {
-                    // refresh
-                    dispatch('fetchEvents');
-                }, 1500);
-            } else {
-                commit('setError', response.data.message);
-                commit('setErrorStatus', response.status);
-            }
-        } catch (error) {
-            commit('setError', error.response ? error.response.data.message : error.message);
-            commit('setErrorStatus', error.response ? error.response.status : null);
-        }
     },
 
     clearErrors({ commit }) {
@@ -180,9 +185,8 @@ const actions = {
     },
 
     resetStore({ commit }) {
-        commit('setEvents', []);
-        commit('setEventsLoading', false);
-        commit('setSelectedEvent', null);
+        commit('setOrders', []);
+        commit('setOrdersLoading', false);
         commit('setError', null);
     },
 };

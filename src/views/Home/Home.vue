@@ -1,29 +1,9 @@
 <template>
   <div class="full-height">
     <v-container>
-      <v-row
-        align="center" 
-        justify="center" 
-        class="fill-height"
-      >
-        <v-col cols="12" sm="6" md="4">
-          <v-btn
-            color="primary"
-            dark
-            block
-            class="mb-2"
-            @click="goToOrders()"
-          >
-            Orders
-          </v-btn>
-          <v-btn
-            color="green"
-            dark
-            block
-            @click="goToUsers()"
-          >
-            Users
-          </v-btn>
+      <v-row align="center" justify="center" class="fill-height">
+        <v-col cols="12">
+          <div>Just a simple and ordinary frontend code challenge about routing, state management and a bit of vuex store stuff. All about tables and dialogues with form submissions</div>
         </v-col>
       </v-row>
     </v-container>

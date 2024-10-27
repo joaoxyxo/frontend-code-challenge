@@ -1,11 +1,12 @@
 import { mapGetters } from 'vuex';
+import TableOrders from '@/components/TableOrders/TableOrders.vue';
 
 
 export default {
     name: 'Orders',
 
     components: {
-
+        TableOrders,
     },
 
     computed: {

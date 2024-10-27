@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <code>users page</code>
+  <div class="pa-6">
+      <TableUsers />
   </div>
 </template>
 

@@ -1,72 +1,82 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import axios from 'axios';
+import { update } from 'lodash';
 
 Vue.use(Vuex);
 
 const state = {
-    events: [],
-    eventsLoading: false,
-    selectedEvent: null,
+    users: [],
+    usersLoading: false,
+    selectedUser: null,
     error: null,
 };
 
 const getters = {
-    events: (state) => state.events,
-    eventsLoading: (state) => state.eventsLoading,
-    selectedEvent: (state) => state.selectedEvent,
+    users: (state) => state.users,
+    usersLoading: (state) => state.usersLoading,
+    selectedUser: (state) => state.selectedUser,
     error: (state) => state.error,
 };
 
 const mutations = {
-    setEvents: (state, payload) => { state.events = payload },
-    setEventsLoading: (state, payload) => { state.eventsLoading = payload },
-    setSelectedEvent: (state, payload) => { state.selectedEvent = payload },
+    setUsers: (state, payload) => { state.users = payload },
+    setUsersLoading: (state, payload) => { state.usersLoading = payload },
+    setSelectedUser: (state, payload) => { state.selectedUser = payload },
     setError: (state, payload) => { state.error = payload },
-    addEvent: (state, payload) => {
-        if (!state.events || !state.events.length)
-            state.events = [];
+    addUser: (state, payload) => {
+        if (!state.users || !state.users.length)
+            state.users = [];
 
-        state.events.unshift(payload);
+        state.users.unshift(payload);
+    },
+    updateUser: (state, payload) => {
+        const index = state.users.findIndex(d => d.id == payload.id);
+
+        const updatedItems = [
+            ...state.users.slice(0, index),
+            payload,
+            ...state.users.slice(index + 1)
+        ];
+
+        state.users = updatedItems;
     },
 };
 
 const actions = {
-    // Fetch the list of events
-    async fetchEvents({ commit }, payload) {
-        commit('setEventsLoading', true);
-        commit('setEvents', []);
+    // Fetch the list of users
+    async fetchUsers({ commit }, payload) {
+        commit('setUsersLoading', true);
+        commit('setUsers', []);
         commit('setError', null);
 
-        let request_url = Vue.prototype.$url_api_live + 'events';
+        let request_url = "http://localhost:3333" + '/users';
 
-        request_url = StoreMixin.methods.generateQueryParamsUrl(request_url, payload);
 
         let output = false;
 
         return axios.get(request_url)
-        .then(function (response) {
-            output = response.status == 200;
-            if (output) {
-                commit('setEvents', response.data);
-            } else {
+            .then(function (response) {
+                output = response.status == 200;
+                if (output) {
+                    commit('setUsers', response.data);
+                } else {
+                    commit('setError', 'Algo correu mal. Tente mais tarde ou contacte o suporte.');
+                }
+            })
+            .catch(function (error) {
+                commit('setUsers', []);
                 commit('setError', 'Algo correu mal. Tente mais tarde ou contacte o suporte.');
-                commit('setErrorStatus', response.status);
-            }
-        })
-        .catch(function (error) {
-            commit('setEvents', []);
-            commit('setError', 'Algo correu mal. Tente mais tarde ou contacte o suporte.');
-            output = false;
-        })
-        .then(function () {
-            commit('setEventsLoading', false);
-            return output;
-        });
+                output = false;
+            })
+            .then(function () {
+                commit('setUsersLoading', false);
+                return output;
+            });
     },
 
-    // Create a new event
-    async createEvent({ commit, dispatch }, payload) {
+    // Create a new user
+    async create({ commit, dispatch }, payload) {
         // Clear state
         dispatch('clearErrors');
 
@@ -74,7 +84,7 @@ const actions = {
         let data = payload;
 
         // Configure request
-        const request_url = Vue.prototype.$url_api_live + 'events';
+        const request_url = "http://localhost:3333" + '/users';
 
         let config = {
             method: 'POST',
@@ -89,63 +99,81 @@ const actions = {
         let output = false;
 
         return axios(config)
-        .then(function (response) {
-            output = response.data.success;
-            if (response.status === 201) {
-                commit('addEvent', data);
-                output = true;
-            } else {
-                commit('setError', 'Algo correu mal. Tente mais tarde ou contacte o suporte.');
-                commit('setHumanError', 'Algo correu mal. Tente mais tarde ou contacte o suporte.');
-                commit('setErrorStatus', response.status);
-            }
-        })
-        .catch(function (error) {
-            commit('setError', error.response ? error.response.data.message : error);
-            output = false;
-        })
-        .then(function () {
-            return output;
-        });
+            .then(function (response) {
+                if (response.status === 200) {
+                    commit('addUser', response.data);
+                    output = true;
+                } else {
+                    commit('setError', 'Algo correu mal. Por favor confirma que colocaste todos os campos corretamente.');
+                }
+            })
+            .catch(function (error) {
+                commit('setError', 'Algo correu mal. Por favor confirma que colocaste todos os campos corretamente.');
+                output = false;
+            })
+            .then(function () {
+                return output;
+            });
     },
 
-    async updateEvent({ commit, dispatch }, payload) {
-        const eventId = payload.id;
-        delete payload.id;
+    async update({ commit, dispatch }, payload) {
+        dispatch('clearErrors');
 
         // Handle payload data
-        let data = JSON.stringify(payload);
-
-        // Configure request_url
-        const request_url = Vue.prototype.$url_api_live + 'events/' + eventId;
+        let data = payload
+        delete data.password
 
         // Configure request
+        const request_url = "http://localhost:3333" + '/user/' + payload.id + '/edit'
         let config = {
             method: 'PUT',
             url: request_url,
-            headers: { 
-              'Content-Type': 'application/json'
+            headers: {
+                'Content-Type': 'application/json'
             },
-            data : data
-        };
+            data: data
+        }
 
         // Execute request & return
         let output = false;
 
         return axios(config)
-        .then(function (response) {
-            output = response.data.success;
+            .then(function (response) {
+                if (response.status === 200) {
+                    output = true
+                    commit('setSelectedUser', response.data);
+                    commit('updateUser', response.data);
+                } else {
+                    commit('setError','Algo correu mal. Por favor confirma que colocaste todos os campos corretamente.');
+                }
+            })
+            .catch(function (error) {
+                commit('setError', 'Algo correu mal. Por favor confirma que colocaste todos os campos corretamente.');
+                output = false;
+            })
+            .then(function () {
+                return output;
+            });
+    },
 
+    async getOrder({ commit }, payload) {
+        commit('setError', null);
+
+        let request_url = "http://localhost:3333" + '/order/' + payload.id;
+
+        let output = false;
+
+        return axios.get(request_url)
+        .then(function (response) {
+            output = response.status == 200;
             if (output) {
-                commit('setSelectedEvent', response.data.data);
+                commit('setSelectedOrder', response.data);
             } else {
-                commit('setError', response.data.message);
-                commit('setHumanError', response.data.human_message);
+                commit('setError', 'Algo correu mal. Tente mais tarde ou contacte o suporte.');
             }
         })
         .catch(function (error) {
-            commit('setError', error.response ? error.response.data.message : error);
-            commit('setHumanError', error.response ? error.response.data.human_message : error);
+            commit('setError', 'Algo correu mal. Tente mais tarde ou contacte o suporte.');
             output = false;
         })
         .then(function () {
@@ -153,26 +181,30 @@ const actions = {
         });
     },
 
-    // Delete an event
-    async deleteEvent({ commit, dispatch }, eventId) {
+    async getUser({ commit }, payload) {
         commit('setError', null);
+        commit('setSelectedUser', null);
 
-        try {
-            const response = await axios.delete(Vue.prototype.$url_api_live + `events/${eventId}`);
-            if (response.status === 204) {
-                // Timeout is here like an HAMMER to fix it. In order to keep it smooth when C,U,D and update Table info visually.
-                setTimeout(() => {
-                    // refresh
-                    dispatch('fetchEvents');
-                }, 1500);
-            } else {
-                commit('setError', response.data.message);
-                commit('setErrorStatus', response.status);
-            }
-        } catch (error) {
-            commit('setError', error.response ? error.response.data.message : error.message);
-            commit('setErrorStatus', error.response ? error.response.status : null);
-        }
+        let request_url = "http://localhost:3333" + '/user/' + payload.id;
+
+        let output = false;
+
+        return axios.get(request_url)
+            .then(function (response) {
+                output = response.status == 200;
+                if (output) {
+                    commit('setSelectedUser', response.data);
+                } else {
+                    commit('setError', 'Algo correu mal. Tente mais tarde ou contacte o suporte.');
+                }
+            })
+            .catch(function (error) {
+                commit('setError', 'Algo correu mal. Tente mais tarde ou contacte o suporte.');
+                output = false;
+            })
+            .then(function () {
+                return output;
+            });
     },
 
     clearErrors({ commit }) {
@@ -180,9 +212,8 @@ const actions = {
     },
 
     resetStore({ commit }) {
-        commit('setEvents', []);
-        commit('setEventsLoading', false);
-        commit('setSelectedEvent', null);
+        commit('setUsers', []);
+        commit('setUsersLoading', false);
         commit('setError', null);
     },
 };
