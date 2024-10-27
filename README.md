@@ -1,24 +1,53 @@
-# frontend-code-challenge
+# Frontend Code Challenge
 
-## Project setup
-```
+Este é um projeto frontend utilizando Vue.js, Vuetify, Moment e Lodash.
+
+## Configuração do Projeto
+
+### Instalação
+Para instalar as dependências do projeto, execute:
+```sh
 npm install
-```
 
-### Compiles and hot-reloads for development
-```
 npm run serve
-```
 
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
 npm run lint
-```
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+
+.gitignore
+
+
+
+public/
+    index.html
+
+src/
+    App.vue
+    assets/
+    components/
+        DatePicker/
+            DatePicker.js
+            DatePicker.vue
+        DialogAddEditOrders/
+        DialogAddEditUsers/
+        DialogConfirmation/
+        EmptyStateNoData/
+        Sidebar/
+        TableOrders/
+        TableUsers/
+    main.js
+    plugins/
+        vuetify.js
+    router.js
+    store/
+        index.js
+        orders.js
+        users.js
+    views/
+        Home/
+        Loading.vue
+        Orders/
+        OrdersSingle/
+        Users/
+        UsersSingle/
+
