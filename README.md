@@ -5,6 +5,11 @@ Este é um projeto frontend utilizando Vue.js, Vuetify, Moment e Lodash.
 ## Configuração do Projeto
 
 ### Instalação
+
+Clonar projeto ( frontend code challenge and go to branch issue-basics )
+
+https://github.com/joaoxyxo/frontend-code-challenge.git
+
 Para instalar as dependências do projeto, execute:
 ```sh
 npm install
